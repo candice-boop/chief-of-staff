@@ -1,0 +1,66 @@
+@import "tailwindcss";
+
+@theme {
+  --font-serif: "Fraunces", "Iowan Old Style", serif;
+  --font-sans: "Inter", -apple-system, "Helvetica Neue", sans-serif;
+
+  /* warm neutral base */
+  --color-cream: #faf6ee;
+  --color-oat: #f2ead9;
+  --color-sand: #e8dcc6;
+  --color-warmwhite: #fdfbf6;
+  --color-charcoal: #332f29;
+  --color-ink: #1d1a16;
+
+  /* portfolio accents — muted, editorial, never neon */
+  --color-clay: #ac6b45;
+  --color-moss: #6d7a56;
+  --color-ochre: #bd8b35;
+  --color-plum: #7c5a6c;
+  --color-terracotta: #bb6c4c;
+  --color-dustyblue: #64818f;
+  --color-sand-deep: #96794f;
+}
+
+@layer base {
+  html {
+    background-color: var(--color-cream);
+  }
+
+  body {
+    @apply bg-cream text-ink antialiased;
+    font-family: var(--font-sans);
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    font-family: var(--font-serif);
+    letter-spacing: -0.01em;
+  }
+
+  ::selection {
+    background-color: var(--color-oat);
+  }
+
+  /* Slim, quiet scrollbars — the app should never feel technical */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  ::-webkit-scrollbar-thumb {
+    background-color: var(--color-sand);
+    border-radius: 999px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+}
+
+@layer utilities {
+  .paper {
+    background-color: var(--color-warmwhite);
+    border: 1px solid color-mix(in srgb, var(--color-sand) 70%, transparent);
+  }
+}
