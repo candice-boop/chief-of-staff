@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import type { AnyRecord, InboxEntry, ItemStatus, RecordPatch, Settings } from '../types'
+import type { AnyRecord, EmailAccount, InboxEntry, ItemStatus, RecordPatch, Settings } from '../types'
 import { ALL_RECORDS, INBOX_ENTRIES } from '../data/seed'
 import { PROJECTS } from '../data/projects'
 import { todayISO } from '../lib/dates'
@@ -27,6 +27,8 @@ interface StoreState {
 
   // settings
   updateSettings: (patch: Partial<Settings>) => void
+  addEmailAccount: (label: string, email: string) => void
+  removeEmailAccount: (id: string) => void
 }
 
 const nowISO = () => new Date().toISOString()
@@ -51,7 +53,9 @@ export const useStore = create<StoreState>()(
         ],
         autonomyMode: 'operator',
         calendarConnected: false,
-        gmailConnected: false,
+        emailAccounts: [
+          { id: genId('email'), label: 'CLS Marketing', email: 'candice@cls-marketing-solutions.com', connected: false },
+        ],
       },
 
       updateRecord: (id, patch) =>
@@ -117,6 +121,20 @@ export const useStore = create<StoreState>()(
       },
 
       updateSettings: (patch) => set((state) => ({ settings: { ...state.settings, ...patch } })),
+
+      addEmailAccount: (label, email) =>
+        set((state) => {
+          const account: EmailAccount = { id: genId('email'), label, email, connected: false }
+          return { settings: { ...state.settings, emailAccounts: [...state.settings.emailAccounts, account] } }
+        }),
+
+      removeEmailAccount: (id) =>
+        set((state) => ({
+          settings: {
+            ...state.settings,
+            emailAccounts: state.settings.emailAccounts.filter((a) => a.id !== id),
+          },
+        })),
     }),
     {
       name: 'candice-inc-store-v1',

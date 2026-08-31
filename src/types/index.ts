@@ -137,10 +137,17 @@ export interface InboxEntry {
   processed: boolean
 }
 
+export interface EmailAccount {
+  id: string
+  label: string // e.g. "CLS Marketing", "Personal"
+  email: string
+  connected: boolean
+}
+
 export interface Settings {
   protectedFamilyHours: { start: string; end: string }
   workRhythm: { label: string; start: string; end: string }[]
   autonomyMode: 'operator'
   calendarConnected: boolean
-  gmailConnected: boolean
+  emailAccounts: EmailAccount[]
 }
