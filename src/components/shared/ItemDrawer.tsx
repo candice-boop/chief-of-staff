@@ -5,9 +5,11 @@ import { useUiStore } from '../../store/uiStore'
 import { PortfolioTag } from './PortfolioTag'
 import { DeadlineTag } from './DeadlineTag'
 import { PROJECTS } from '../../data/projects'
+import { PORTFOLIOS } from '../../data/portfolios'
+import { pillarsForArea } from '../../data/contentPillars'
 import { STATUS_LABEL } from '../../lib/theme'
 import { shortDateLabel } from '../../lib/dates'
-import type { ItemStatus } from '../../types'
+import type { ItemStatus, PortfolioAreaId } from '../../types'
 
 const STATUS_OPTIONS: ItemStatus[] = ['inbox', 'active', 'today', 'this-week', 'waiting', 'parked', 'completed', 'archived']
 
@@ -121,6 +123,48 @@ export function ItemDrawer() {
               </select>
             </label>
           </div>
+
+          {record.type === 'idea' && (
+            <div className="grid grid-cols-2 gap-4">
+              <label className="block">
+                <span className="text-[12px] uppercase tracking-wide text-charcoal/40">Portfolio</span>
+                <select
+                  value={record.portfolioArea ?? ''}
+                  onChange={(e) =>
+                    updateRecord(record.id, {
+                      portfolioArea: (e.target.value || undefined) as PortfolioAreaId | undefined,
+                      contentPillarId: undefined,
+                    })
+                  }
+                  className="mt-1 w-full rounded-md border border-sand bg-warmwhite px-2 py-1.5 text-[14px] text-ink"
+                >
+                  <option value="">Unassigned</option>
+                  {PORTFOLIOS.map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {p.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              {pillarsForArea(record.portfolioArea).length > 0 && (
+                <label className="block">
+                  <span className="text-[12px] uppercase tracking-wide text-charcoal/40">Content pillar</span>
+                  <select
+                    value={record.contentPillarId ?? ''}
+                    onChange={(e) => updateRecord(record.id, { contentPillarId: e.target.value || undefined })}
+                    className="mt-1 w-full rounded-md border border-sand bg-warmwhite px-2 py-1.5 text-[14px] text-ink"
+                  >
+                    <option value="">Not a content idea</option>
+                    {pillarsForArea(record.portfolioArea).map((cp) => (
+                      <option key={cp.id} value={cp.id}>
+                        {cp.name}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              )}
+            </div>
+          )}
 
           <label className="block">
             <span className="text-[12px] uppercase tracking-wide text-charcoal/40">Notes</span>

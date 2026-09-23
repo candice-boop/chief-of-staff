@@ -92,6 +92,8 @@ export interface IdeaItem extends BaseRecord {
   type: 'idea'
   ideaStatus: IdeaStatus
   capturedDate: string
+  /** Set when this idea is a content idea slotted against one of contentPillars.ts */
+  contentPillarId?: string
 }
 
 export interface NoteItem extends BaseRecord {
@@ -113,6 +115,7 @@ export interface RecordPatch extends Partial<Omit<BaseRecord, 'id'>> {
   requestedDate?: string
   ideaStatus?: IdeaStatus
   capturedDate?: string
+  contentPillarId?: string
 }
 
 export interface Project {
@@ -127,12 +130,14 @@ export interface Project {
   notes?: string
 }
 
-export type InboxSourceKind = 'task' | 'brain-dump' | 'idea' | 'note' | 'pasted'
+export type InboxSourceKind = 'task' | 'brain-dump' | 'idea' | 'note' | 'pasted' | 'debrief'
 
 export interface InboxEntry {
   id: string
   rawText: string
   kind?: InboxSourceKind
+  /** Set when this entry came from a daily debrief capture */
+  debriefPeriod?: 'morning' | 'evening'
   createdAt: string
   processed: boolean
 }

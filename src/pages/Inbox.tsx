@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { CheckSquare, Lightbulb, StickyNote, X, Inbox as InboxIcon } from 'lucide-react'
+import { CheckSquare, Lightbulb, Sparkles, StickyNote, X, Inbox as InboxIcon, Mic } from 'lucide-react'
 import { useStore } from '../store/useStore'
 import { useUiStore } from '../store/uiStore'
 import { relativeDayPhrase } from '../lib/dates'
@@ -10,6 +10,7 @@ const KIND_HINT: Record<string, string> = {
   idea: 'Looks like an idea',
   note: 'Looks like a note',
   pasted: 'Pasted content',
+  debrief: 'From a daily debrief',
 }
 
 export function Inbox() {
@@ -18,6 +19,9 @@ export function Inbox() {
   const openRecord = useUiStore((s) => s.openRecord)
   const [text, setText] = useState('')
   const addInboxCapture = useStore((s) => s.addInboxCapture)
+  const [debriefText, setDebriefText] = useState('')
+  const [debriefPeriod, setDebriefPeriod] = useState<'morning' | 'evening'>('evening')
+  const addDebriefCapture = useStore((s) => s.addDebriefCapture)
 
   const unprocessed = entries.filter((e) => !e.processed)
 
@@ -27,6 +31,13 @@ export function Inbox() {
         type === 'idea'
           ? { type: 'idea', title: rawText, ideaStatus: 'new' }
           : { type, title: rawText },
+    })
+    if (newId) openRecord(newId)
+  }
+
+  function classifyAsContentIdea(id: string, rawText: string) {
+    const newId = processInboxEntry(id, {
+      record: { type: 'idea', title: rawText, ideaStatus: 'new' },
     })
     if (newId) openRecord(newId)
   }
@@ -48,7 +59,7 @@ export function Inbox() {
           addInboxCapture(text.trim())
           setText('')
         }}
-        className="mb-8 paper rounded-2xl p-4 flex items-center gap-3"
+        className="mb-4 paper rounded-2xl p-4 flex items-center gap-3"
       >
         <InboxIcon className="h-4 w-4 text-charcoal/35 shrink-0" />
         <input
@@ -64,6 +75,52 @@ export function Inbox() {
         >
           Add
         </button>
+      </form>
+
+      <form
+        onSubmit={(e) => {
+          e.preventDefault()
+          if (!debriefText.trim()) return
+          addDebriefCapture(debriefText.trim(), debriefPeriod)
+          setDebriefText('')
+        }}
+        className="mb-8 paper rounded-2xl p-4"
+      >
+        <div className="flex items-center gap-2">
+          <Mic className="h-4 w-4 text-charcoal/35 shrink-0" />
+          <p className="text-[13px] font-medium text-ink">Daily debrief</p>
+          <div className="ml-auto flex items-center gap-1 rounded-full bg-oat/60 p-1">
+            {(['morning', 'evening'] as const).map((period) => (
+              <button
+                key={period}
+                type="button"
+                onClick={() => setDebriefPeriod(period)}
+                className={`rounded-full px-2.5 py-1 text-[12px] capitalize transition-colors ${debriefPeriod === period ? 'bg-warmwhite text-ink shadow-sm' : 'text-charcoal/50'}`}
+              >
+                {period}
+              </button>
+            ))}
+          </div>
+        </div>
+        <p className="mt-1 text-[12.5px] text-charcoal/45">
+          Paste today's dictated drive or walk debrief. It'll get split into separate cards below, ready to sort.
+        </p>
+        <textarea
+          value={debriefText}
+          onChange={(e) => setDebriefText(e.target.value)}
+          rows={3}
+          placeholder="Talked to the Field Nation team about renewal timing, need to book DJ's dentist appointment, had an idea for a Hey Mom post about…"
+          className="mt-3 w-full bg-transparent text-[14.5px] text-ink placeholder:text-charcoal/35 leading-relaxed focus:outline-none resize-y"
+        />
+        <div className="mt-2 flex justify-end">
+          <button
+            type="submit"
+            disabled={!debriefText.trim()}
+            className="rounded-full bg-ink text-warmwhite px-4 py-1.5 text-[13px] font-medium disabled:opacity-30"
+          >
+            Log debrief
+          </button>
+        </div>
       </form>
 
       {unprocessed.length === 0 ? (
@@ -99,6 +156,12 @@ export function Inbox() {
                   className="inline-flex items-center gap-1.5 rounded-full border border-sand px-3 py-1.5 text-[12.5px] text-charcoal/70 hover:border-charcoal/30 hover:text-ink transition-colors"
                 >
                   <StickyNote className="h-3.5 w-3.5" /> Keep as note
+                </button>
+                <button
+                  onClick={() => classifyAsContentIdea(entry.id, entry.rawText)}
+                  className="inline-flex items-center gap-1.5 rounded-full border border-sand px-3 py-1.5 text-[12.5px] text-charcoal/70 hover:border-charcoal/30 hover:text-ink transition-colors"
+                >
+                  <Sparkles className="h-3.5 w-3.5" /> Content idea
                 </button>
                 <button
                   onClick={() => processInboxEntry(entry.id, { dismiss: true })}

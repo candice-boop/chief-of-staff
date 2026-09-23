@@ -4,6 +4,7 @@ import type { AnyRecord, InboxEntry, ItemStatus, RecordPatch, Settings } from '.
 import { ALL_RECORDS, INBOX_ENTRIES } from '../data/seed'
 import { PROJECTS } from '../data/projects'
 import { todayISO } from '../lib/dates'
+import { splitDebrief } from '../lib/debrief'
 
 interface StoreState {
   records: AnyRecord[]
@@ -20,6 +21,7 @@ interface StoreState {
 
   // inbox actions
   addInboxCapture: (rawText: string) => void
+  addDebriefCapture: (rawText: string, period?: 'morning' | 'evening') => void
   processInboxEntry: (
     id: string,
     result: { record: RecordPatch & { type: AnyRecord['type']; title: string } } | { dismiss: true },
@@ -88,6 +90,20 @@ export const useStore = create<StoreState>()(
             ...state.inboxEntries,
           ],
         })),
+
+      addDebriefCapture: (rawText, period) =>
+        set((state) => {
+          const created = nowISO()
+          const fragments = splitDebrief(rawText).map((fragment) => ({
+            id: genId('inbox'),
+            rawText: fragment,
+            kind: 'debrief' as const,
+            debriefPeriod: period,
+            createdAt: created,
+            processed: false,
+          }))
+          return { inboxEntries: [...fragments, ...state.inboxEntries] }
+        }),
 
       processInboxEntry: (id, result) => {
         const newId = 'dismiss' in result ? undefined : genId(result.record.type)

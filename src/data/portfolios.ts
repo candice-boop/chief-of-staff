@@ -7,8 +7,10 @@ export const PORTFOLIOS: PortfolioArea[] = [
     tagline: 'Consulting, strategy & client growth',
     color: 'clay',
     subAreas: [
-      { id: 'client-delivery', name: 'Client Delivery' },
-      { id: 'business-development', name: 'Business Development' },
+      { id: 'knot-worldwide', name: 'The Knot Worldwide' },
+      { id: 'field-nation', name: 'Field Nation' },
+      { id: 'client-delivery', name: 'Other Client Delivery' },
+      { id: 'business-development', name: 'Prospects & Business Development' },
     ],
   },
   {
@@ -25,9 +27,13 @@ export const PORTFOLIOS: PortfolioArea[] = [
   },
   {
     id: 'hey-mom',
-    name: 'Hey Mom! Quit Your Job',
-    tagline: 'Strategy, content & audience',
+    name: 'Hey Mom',
+    tagline: 'The portfolio umbrella: content, audience & the Quit Your Job events',
     color: 'plum',
+    subAreas: [
+      { id: 'content-audience', name: 'Content & Audience' },
+      { id: 'quit-your-job', name: 'Quit Your Job Events' },
+    ],
   },
   {
     id: 'mother-mogul',

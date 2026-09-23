@@ -1,9 +1,12 @@
 import { useState } from 'react'
-import { ArrowUpRight } from 'lucide-react'
+import { ArrowUpRight, Sparkles } from 'lucide-react'
 import type { IdeaItem } from '../../types'
 import { useStore } from '../../store/useStore'
 import { PortfolioTag } from '../shared/PortfolioTag'
+import { pillarById } from '../../data/contentPillars'
 import { shortDateLabel } from '../../lib/dates'
+
+const CHANNEL_LABEL: Record<string, string> = { linkedin: 'LinkedIn', tiktok: 'TikTok', instagram: 'Instagram' }
 
 const IDEA_STATUS_LABEL: Record<string, string> = {
   new: 'New',
@@ -24,6 +27,7 @@ const IDEA_STATUS_STYLE: Record<string, string> = {
 export function IdeaCard({ idea, accentRotation }: { idea: IdeaItem; accentRotation: number }) {
   const updateRecord = useStore((s) => s.updateRecord)
   const [expanded, setExpanded] = useState(false)
+  const pillar = pillarById(idea.contentPillarId)
 
   return (
     <div
@@ -53,6 +57,12 @@ export function IdeaCard({ idea, accentRotation }: { idea: IdeaItem; accentRotat
         <PortfolioTag area={idea.portfolioArea} subArea={idea.subArea} />
         {idea.reviewByDate && <span className="text-[12px] text-dustyblue">Revisit {shortDateLabel(idea.reviewByDate)}</span>}
       </div>
+
+      {pillar && (
+        <div className="mt-2 inline-flex w-fit items-center gap-1.5 rounded-full bg-plum/10 px-2.5 py-1 text-[11.5px] text-plum">
+          <Sparkles className="h-3 w-3" /> {CHANNEL_LABEL[pillar.channel]} · {pillar.name}
+        </div>
+      )}
 
       {idea.ideaStatus !== 'promoted' && idea.ideaStatus !== 'archived' && (
         <div className="mt-4 pt-3 border-t border-sand/70 flex items-center gap-2">

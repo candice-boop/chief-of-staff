@@ -10,13 +10,20 @@ export function IdeaBank() {
   const records = useStore((s) => s.records)
   const [statusFilter, setStatusFilter] = useState('all')
   const [portfolioFilter, setPortfolioFilter] = useState('all')
+  const [contentOnly, setContentOnly] = useState(false)
 
   const ideas = useMemo(() => {
     let list = records.filter((r): r is IdeaItem => r.type === 'idea')
     if (statusFilter !== 'all') list = list.filter((i) => i.ideaStatus === statusFilter)
     if (portfolioFilter !== 'all') list = list.filter((i) => i.portfolioArea === portfolioFilter)
+    if (contentOnly) list = list.filter((i) => !!i.contentPillarId)
     return list.sort((a, b) => (b.capturedDate ?? '').localeCompare(a.capturedDate ?? ''))
-  }, [records, statusFilter, portfolioFilter])
+  }, [records, statusFilter, portfolioFilter, contentOnly])
+
+  const contentIdeaCount = useMemo(
+    () => records.filter((r): r is IdeaItem => r.type === 'idea' && !!r.contentPillarId).length,
+    [records],
+  )
 
   return (
     <div>
@@ -53,6 +60,12 @@ export function IdeaBank() {
             </option>
           ))}
         </select>
+        <button
+          onClick={() => setContentOnly((v) => !v)}
+          className={`rounded-full border px-3 py-1.5 text-[12.5px] transition-colors ${contentOnly ? 'border-plum bg-plum/10 text-plum' : 'border-sand bg-warmwhite text-charcoal/70'}`}
+        >
+          Content ideas ({contentIdeaCount})
+        </button>
         <span className="ml-auto text-[12.5px] text-charcoal/40">{ideas.length} ideas</span>
       </div>
 
