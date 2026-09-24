@@ -1,8 +1,13 @@
 import { useState } from 'react'
-import { CheckSquare, Lightbulb, Sparkles, StickyNote, X, Inbox as InboxIcon, Mic } from 'lucide-react'
+import { CheckSquare, Lightbulb, Sparkles, StickyNote, X, Inbox as InboxIcon, Mic, Wand2, Loader2 } from 'lucide-react'
 import { useStore } from '../store/useStore'
 import { useUiStore } from '../store/uiStore'
 import { relativeDayPhrase } from '../lib/dates'
+import { aiEnabled } from '../lib/anthropicClient'
+import { classifyFragment } from '../lib/classify'
+
+// Opus 5 list pricing, for the on-screen usage estimate only — not a billing record.
+const OPUS_5_PRICE_PER_MTOK = { input: 5, output: 25 }
 
 const KIND_HINT: Record<string, string> = {
   task: 'Looks like a task',
@@ -22,6 +27,9 @@ export function Inbox() {
   const [debriefText, setDebriefText] = useState('')
   const [debriefPeriod, setDebriefPeriod] = useState<'morning' | 'evening'>('evening')
   const addDebriefCapture = useStore((s) => s.addDebriefCapture)
+  const aiUsage = useUiStore((s) => s.aiUsage)
+  const recordAiUsage = useUiStore((s) => s.recordAiUsage)
+  const [aiState, setAiState] = useState<Record<string, 'loading' | 'error'>>({})
 
   const unprocessed = entries.filter((e) => !e.processed)
 
@@ -42,6 +50,34 @@ export function Inbox() {
     if (newId) openRecord(newId)
   }
 
+  async function classifyWithAi(id: string, rawText: string) {
+    setAiState((s) => ({ ...s, [id]: 'loading' }))
+    try {
+      const { result, usage } = await classifyFragment(rawText)
+      recordAiUsage(usage)
+      const newId = processInboxEntry(id, {
+        record: {
+          type: result.type,
+          title: result.title || rawText,
+          ...(result.type === 'idea' ? { ideaStatus: 'new' as const } : {}),
+          portfolioArea: result.portfolioArea ?? undefined,
+          subArea: result.subArea ?? undefined,
+          contentPillarId: result.contentPillarId ?? undefined,
+          priority: result.priority ?? undefined,
+        },
+      })
+      setAiState((s) => {
+        const next = { ...s }
+        delete next[id]
+        return next
+      })
+      if (newId) openRecord(newId)
+    } catch (err) {
+      console.error('AI classification failed', err)
+      setAiState((s) => ({ ...s, [id]: 'error' }))
+    }
+  }
+
   return (
     <div>
       <header className="mb-8">
@@ -50,6 +86,21 @@ export function Inbox() {
         <p className="mt-1.5 text-[15px] text-charcoal/55">
           Nothing here needs to be tidy. Process each into a task, idea, or note whenever you're ready.
         </p>
+        {aiEnabled && aiUsage.calls > 0 && (
+          <p className="mt-2 text-[12px] text-charcoal/40">
+            AI triage this session: {aiUsage.calls} call{aiUsage.calls === 1 ? '' : 's'} ·{' '}
+            {(aiUsage.inputTokens + aiUsage.outputTokens).toLocaleString()} tokens · ~$
+            {(
+              (aiUsage.inputTokens / 1_000_000) * OPUS_5_PRICE_PER_MTOK.input +
+              (aiUsage.outputTokens / 1_000_000) * OPUS_5_PRICE_PER_MTOK.output
+            ).toFixed(3)}
+          </p>
+        )}
+        {!aiEnabled && (
+          <p className="mt-2 text-[12px] text-charcoal/35">
+            AI triage is off — set VITE_ANTHROPIC_API_KEY in .env.local to enable it.
+          </p>
+        )}
       </header>
 
       <form
@@ -137,8 +188,25 @@ export function Inbox() {
                 <span className="shrink-0 text-[11.5px] text-charcoal/35">{relativeDayPhrase(entry.createdAt.slice(0, 10))}</span>
               </div>
               {entry.kind && <p className="mt-2 text-[12px] text-charcoal/35">{KIND_HINT[entry.kind]}</p>}
+              {aiState[entry.id] === 'error' && (
+                <p className="mt-2 text-[12px] text-terracotta">AI triage failed — try again, or sort it manually.</p>
+              )}
 
               <div className="mt-4 flex flex-wrap items-center gap-2">
+                {aiEnabled && (
+                  <button
+                    onClick={() => classifyWithAi(entry.id, entry.rawText)}
+                    disabled={aiState[entry.id] === 'loading'}
+                    className="inline-flex items-center gap-1.5 rounded-full border border-plum/40 bg-plum/5 px-3 py-1.5 text-[12.5px] text-plum hover:border-plum transition-colors disabled:opacity-50"
+                  >
+                    {aiState[entry.id] === 'loading' ? (
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    ) : (
+                      <Wand2 className="h-3.5 w-3.5" />
+                    )}
+                    Triage with AI
+                  </button>
+                )}
                 <button
                   onClick={() => classify(entry.id, entry.rawText, 'task')}
                   className="inline-flex items-center gap-1.5 rounded-full border border-sand px-3 py-1.5 text-[12.5px] text-charcoal/70 hover:border-charcoal/30 hover:text-ink transition-colors"
