@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { Calendar, Mail, ShieldCheck, Lock } from 'lucide-react'
+import { Calendar, Mail, ShieldCheck, Lock, Download } from 'lucide-react'
 import { useStore } from '../store/useStore'
 
 const OPERATOR_CAN = ['Read', 'Organize', 'Summarize', 'Classify', 'Prioritize', 'Prepare', 'Draft', 'Recommend', 'Maintain the backlog']
@@ -8,6 +8,20 @@ const REQUIRES_APPROVAL = ['Sending emails', 'Booking or purchasing anything', '
 export function Settings() {
   const settings = useStore((s) => s.settings)
   const updateSettings = useStore((s) => s.updateSettings)
+  const records = useStore((s) => s.records)
+  const inboxEntries = useStore((s) => s.inboxEntries)
+  const projects = useStore((s) => s.projects)
+
+  function exportData() {
+    const payload = { exportedAt: new Date().toISOString(), records, inboxEntries, projects, settings }
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `candice-inc-export-${new Date().toISOString().slice(0, 10)}.json`
+    a.click()
+    URL.revokeObjectURL(url)
+  }
 
   return (
     <div className="max-w-2xl">
@@ -16,6 +30,20 @@ export function Settings() {
         <h1 className="mt-1 font-serif text-3xl text-ink">How Candice, Inc. runs</h1>
         <p className="mt-1.5 text-[15px] text-charcoal/55">Preferences that shape how work gets planned around your life.</p>
       </header>
+
+      <section className="mb-10">
+        <h2 className="font-serif text-xl text-ink mb-1">Export your data</h2>
+        <p className="text-[13.5px] text-charcoal/50 mb-4">
+          Everything here lives only in this browser's local storage. Download it as a file to move it somewhere else —
+          {' '}{records.length} record{records.length === 1 ? '' : 's'}, {inboxEntries.length} inbox entr{inboxEntries.length === 1 ? 'y' : 'ies'}.
+        </p>
+        <button
+          onClick={exportData}
+          className="inline-flex items-center gap-2 rounded-full bg-ink text-warmwhite px-4 py-2 text-[13px] font-medium"
+        >
+          <Download className="h-4 w-4" /> Export all data (JSON)
+        </button>
+      </section>
 
       <section className="mb-10">
         <h2 className="font-serif text-xl text-ink mb-1">Protected family time</h2>
